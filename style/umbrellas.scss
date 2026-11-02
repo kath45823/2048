@@ -1,0 +1,112 @@
+// Umbrella artwork, drawn as inline SVG so each tile stays a single element.
+// The canopy lives in a 100x56 viewBox with four panels meeting at the top.
+
+$umbrella-panels: "M50 8C28 8 8 22 6 40Q17 31 28 40C30 26 38 14 50 8Z",
+                  "M50 8C38 14 30 26 28 40Q39 31 50 40Z",
+                  "M50 8V40Q61 31 72 40C70 26 62 14 50 8Z",
+                  "M50 8C62 14 70 26 72 40Q83 31 94 40C92 22 72 8 50 8Z";
+
+$umbrella-ink: #4a4468;
+
+// "#" has to be escaped inside a data URI
+@function svg-color($color) {
+  @return "%23" + str-slice("#{$color}", 2);
+}
+
+@function svg-uri($svg) {
+  @return url("data:image/svg+xml,#{$svg}");
+}
+
+// Decorations, wrapped in umbrella-deco() to give them a color
+@function dot($x, $y, $r: 2.6) {
+  @return "<circle cx='#{$x}' cy='#{$y}' r='#{$r}'/>";
+}
+
+@function heart($x, $y) {
+  @return "<path transform='translate(#{$x} #{$y})' d='M0-1.5C-2-5-6-2.5-4.2 1L0 5 4.2 1C6-2.5 2-5 0-1.5Z'/>";
+}
+
+@function star($x, $y) {
+  @return "<path transform='translate(#{$x} #{$y})' d='M0-4.6 1.4-1.4 4.8-1.1 2.2 1.1 3 4.5 0 2.7-3 4.5-2.2 1.1-4.8-1.1-1.4-1.4Z'/>";
+}
+
+@function umbrella-deco($color, $shapes...) {
+  $markup: "";
+
+  @each $shape in $shapes {
+    $markup: $markup + $shape;
+  }
+
+  @return "<g fill='#{svg-color($color)}'>#{$markup}</g>";
+}
+
+@function umbrella-face() {
+  $ink: svg-color($umbrella-ink);
+
+  @return "<g fill='#{$ink}'><circle cx='41' cy='24' r='2'/><circle cx='59' cy='24' r='2'/></g>" +
+          "<path d='M46 26Q50 30 54 26' fill='none' stroke='#{$ink}' stroke-width='1.6' stroke-linecap='round'/>" +
+          "<g fill='%23ff8fab' opacity='.6'><circle cx='35' cy='28' r='2.6'/><circle cx='65' cy='28' r='2.6'/></g>";
+}
+
+// $colors cycles across the four canopy panels
+@function umbrella($colors, $stem: $umbrella-ink, $deco: "") {
+  $canopy: "";
+
+  @for $i from 1 through length($umbrella-panels) {
+    $fill: nth($colors, ($i - 1) % length($colors) + 1);
+    $canopy: $canopy + "<path fill='#{svg-color($fill)}' d='#{nth($umbrella-panels, $i)}'/>";
+  }
+
+  $ink: svg-color($stem);
+
+  @return svg-uri(
+    "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 56'>" +
+    "<path d='M50 38V53' stroke='#{$ink}' stroke-width='2.6' stroke-linecap='round'/>" +
+    "<path d='M50 8V4' stroke='#{$ink}' stroke-width='2.6' stroke-linecap='round'/>" +
+    $canopy + $deco +
+    "</svg>"
+  );
+}
+
+$rainbow: #ff9aa2, #ffd166, #7fd8a4, #8fb4f5;
+
+// Tile background, umbrella and bright text flag for all 11 states
+$umbrella-tiles:
+  #eaf4ff umbrella(#8ec5f2 #a9d6f7, $deco: umbrella-face()) false, // 2
+  #eeeeff umbrella(#a6aaf5 #ffffff) false, // 4
+  #f3ebff umbrella(#c39df2 #cfb0f6, $deco: umbrella-deco(#ffffff, dot(22, 27), dot(38, 21), dot(62, 21), dot(78, 27), dot(50, 14), dot(40, 32), dot(60, 32))) false, // 8
+  #ffe9f5 umbrella(#f29ac8 #f7b6d8, $deco: umbrella-face()) false, // 16
+  #ffe6e4 umbrella(#f6918f #f9a9a7, $deco: umbrella-deco(#ffffff, heart(22, 27), heart(40, 19), heart(60, 19), heart(78, 27), heart(50, 31))) false, // 32
+  #fff0dd umbrella(#f7b267 #fff3df) false, // 64
+  #fff8d6 umbrella(#f2ce4f #f6da75, $deco: umbrella-deco(#ef9f32, star(22, 27), star(50, 17), star(78, 27), star(38, 31), star(62, 31))) false, // 128
+  #e3f8e4 umbrella(#7fd29a #9be0b1, $deco: umbrella-face()) false, // 256
+  #d9f7f2 umbrella(#59c9bd #ffffff, $deco: umbrella-deco(#f7b267, star(50, 17))) false, // 512
+  #575bb5 umbrella(#ffffff #d9dcff, #ffffff, umbrella-deco(#6266c4, star(22, 27), star(50, 17), star(78, 27), star(38, 31), star(62, 31))) true, // 1024
+  #fff6cc umbrella($rainbow, $deco: umbrella-face()) false; // 2048
+
+$umbrella-super: umbrella($rainbow, #ffffff, umbrella-deco(#ffffff, star(22, 27), star(50, 17), star(78, 27), star(38, 31), star(62, 31)));
+
+$umbrella-title: umbrella($rainbow, #6266c4, umbrella-face());
+
+// Page decoration
+@function raindrop($x, $y, $scale: 1) {
+  @return "<path transform='translate(#{$x} #{$y}) scale(#{$scale})' d='M0 0C3 6 6 9 6 13A6 6 0 0 1-6 13C-6 9-3 6 0 0Z'/>";
+}
+
+$rain-near: svg-uri(
+  "<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><g fill='%238fa6ee'>" +
+  raindrop(40, 30) + raindrop(210, 80) + raindrop(120, 170) + raindrop(285, 225) + raindrop(60, 270) +
+  "</g></svg>"
+);
+
+$rain-far: svg-uri(
+  "<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><g fill='%23c39df2'>" +
+  raindrop(90, 20, .6) + raindrop(235, 60, .6) + raindrop(20, 120, .6) + raindrop(165, 150, .6) + raindrop(100, 225, .6) +
+  "</g></svg>"
+);
+
+$cloud: svg-uri(
+  "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 100'>" +
+  "<path fill='%23ffffff' opacity='.85' d='M45 90A30 30 0 0 1 40 31 42 42 0 0 1 118 22 34 34 0 0 1 165 44 24 24 0 0 1 162 90Z'/>" +
+  "</svg>"
+);
